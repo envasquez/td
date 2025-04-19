@@ -4,7 +4,6 @@ import sys
 import json
 import requests
 import logging
-import time
 
 from bs4 import BeautifulSoup, Tag, NavigableString
 
@@ -161,7 +160,6 @@ def main():
         with open(filename, mode="w", encoding="utf-8") as f:
             json.dump(result, f, indent=4)
             logger.debug(f"Wrote {t_name} {t_date} results to: {filename}")
-        time.sleep(3)
 
 
 if __name__ == "__main__":
