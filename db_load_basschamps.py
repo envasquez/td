@@ -1,8 +1,7 @@
-import os
 import json
+import os
 import sqlite3
 from datetime import datetime
-
 
 DB_FILE = "tournaments.db"
 TOURNAMENT_DIR = "data"
@@ -80,7 +79,8 @@ if __name__ == "__main__":
                     if ident in metadata.get("Tournament", "").lower():
                         lake = l
                         break
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO tournaments (
                         date, lake, region, tournament, tournament_trail
                     ) VALUES (?, ?, ?, ?, ?)
@@ -91,27 +91,31 @@ if __name__ == "__main__":
                         metadata.get("Region"),
                         metadata.get("Tournament"),
                         metadata.get("Tournament Trail"),
-                ))
+                    ),
+                )
                 tournament_id = cursor.lastrowid
                 for r in results:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT INTO results (
                             tournament_id, place, skeeter_boat, angler1, angler1_hometown,
                             angler2, angler2_hometown, fish, big_bass, weight, prize_amt
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        tournament_id,
-                        r.get("place"),
-                        r.get("skeeter_boat"),
-                        r.get("angler1"),
-                        r.get("angler1_hometown"),
-                        r.get("angler2"),
-                        r.get("angler2_hometown"),
-                        r.get("fish"),
-                        r.get("big bass"),
-                        r.get("Wt."),
-                        r.get("prize amt.")
-                    ))
+                    """,
+                        (
+                            tournament_id,
+                            r.get("place"),
+                            r.get("skeeter_boat"),
+                            r.get("angler1"),
+                            r.get("angler1_hometown"),
+                            r.get("angler2"),
+                            r.get("angler2_hometown"),
+                            r.get("fish"),
+                            r.get("big bass"),
+                            r.get("Wt."),
+                            r.get("prize amt."),
+                        ),
+                    )
     finally:
         if conn:
             conn.commit()
