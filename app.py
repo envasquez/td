@@ -2,13 +2,15 @@ import sqlite3
 
 import altair as alt
 import pandas as pd
-import streamlit as st
 import plotly.graph_objects as go
-
+import streamlit as st
 
 TEXT_COLOR = "white" if st.get_option("theme.base") in ["dark", None] else "black"
 
+
 st.set_page_config(layout="wide")
+
+
 conn = sqlite3.connect("tournaments.db")
 
 st.header("BASS CHAMPS Tournament Data")
@@ -23,44 +25,60 @@ JOIN tournaments t ON r.tournament_id = t.id
 WHERE r.place IN (1, 2, 3) AND r.weight IS NOT NULL
 GROUP BY year, place
 """
-df = pd.read_sql_query(query, conn).pivot(index="year", columns="place", values="avg_weight").fillna(0).reset_index()
+df = (
+    pd.read_sql_query(query, conn)
+    .pivot(index="year", columns="place", values="avg_weight")
+    .fillna(0)
+    .reset_index()
+)
 rows = []
 for _, r in df.iterrows():
     y, p = r["year"], {1: r.get(1, 0), 2: r.get(2, 0), 3: r.get(3, 0)}
     base = 0
     for place, emoji in zip([3, 2, 1], ["🥉 3rd", "🥈 2nd", "🥇 1st"]):
         height = p[place]
-        rows.append({
-            "year": y,
-            "place": emoji,
-            "avg_weight": height,
-            "label_y": base + height / 2,
-            "label": f"{height:.2f}",
-            "avg_weight_lbs": f"{height:.2f} lbs"
-        })
+        rows.append(
+            {
+                "year": y,
+                "place": emoji,
+                "avg_weight": height,
+                "label_y": base + height / 2,
+                "label": f"{height:.2f}",
+                "avg_weight_lbs": f"{height:.2f} lbs",
+            }
+        )
         base += height
 df_label = pd.DataFrame(rows)
-bars = alt.Chart(df_label).mark_bar().encode(
-    x="year:N",
-    y=alt.Y("avg_weight:Q", title="Avg Weight (lbs)", stack="zero"),
-    color=alt.Color(
-        "place:N",
-        sort=["🥇 1st", "🥈 2nd", "🥉 3rd"],
-        scale=alt.Scale(scheme="blues"),
-        title="Placement"
-    ),
-    tooltip=[
-        alt.Tooltip("year:N", title="Year"),
-        alt.Tooltip("place:N", title="Place"),
-        alt.Tooltip("avg_weight_lbs:N", title="Avg Weight")
-    ]
+bars = (
+    alt.Chart(df_label)
+    .mark_bar()
+    .encode(
+        x="year:N",
+        y=alt.Y("avg_weight:Q", title="Avg Weight (lbs)", stack="zero"),
+        color=alt.Color(
+            "place:N",
+            sort=["🥇 1st", "🥈 2nd", "🥉 3rd"],
+            scale=alt.Scale(scheme="blues"),
+            title="Placement",
+        ),
+        tooltip=[
+            alt.Tooltip("year:N", title="Year"),
+            alt.Tooltip("place:N", title="Place"),
+            alt.Tooltip("avg_weight_lbs:N", title="Avg Weight"),
+        ],
+    )
 )
-labels = alt.Chart(df_label).mark_text(
-    align="center", baseline="middle", color="white", fontSize=11, fontStyle="bold", tooltip=None
-).encode(
-    x="year:N",
-    y="label_y:Q",
-    text="label:N"
+labels = (
+    alt.Chart(df_label)
+    .mark_text(
+        align="center",
+        baseline="middle",
+        color="white",
+        fontSize=11,
+        fontStyle="bold",
+        tooltip=None,
+    )
+    .encode(x="year:N", y="label_y:Q", text="label:N")
 )
 st.altair_chart(bars + labels, use_container_width=True)
 
@@ -83,28 +101,27 @@ df = df.sort_values("avg_winning_weight", ascending=False).reset_index(drop=True
 df["lake"] = pd.Categorical(df["lake"], categories=df["lake"], ordered=True)
 max_count = df["tournament_count"].max()
 base = alt.Chart(df).encode(x=alt.X("lake:N", title="Lake", sort=None))
+bars = base.mark_bar(color="steelblue").encode(
+    y=alt.Y("avg_winning_weight:Q", axis=alt.Axis(title="Avg Winning Weight (lbs)")),
+    tooltip=["lake", "avg_winning_weight", "tournament_count"],
+)
+line = base.mark_line(interpolate="monotone", color="orange", strokeWidth=2).encode(
+    y=alt.Y(
+        "tournament_count:Q",
+        axis=alt.Axis(title="Tournament Count", orient="right"),
+        scale=alt.Scale(domain=(1, max_count + 1)),
+    ),
+    tooltip=["lake", "avg_winning_weight", "tournament_count"],
+)
 text = base.mark_text(
     align="center", baseline="bottom", dy=-5, color=TEXT_COLOR, fontSize=12
 ).encode(
     y=alt.Y("avg_winning_weight:Q", axis=alt.Axis(title=None)),
     text=alt.Text("avg_winning_weight:Q", format=".2f"),
 )
-bars = base.mark_bar(color="steelblue").encode(
-    y=alt.Y("avg_winning_weight:Q", axis=alt.Axis(title=None)),
-    tooltip=["lake", "avg_winning_weight", "tournament_count"],
-)
-line = base.mark_line(interpolate="monotone", color="orange", strokeWidth=2).encode(
-    y=alt.Y(
-        "tournament_count:Q",
-        axis=alt.Axis(title="Tournament Count"),
-        scale=alt.Scale(domain=(1, max_count + 1)),
-    ),
-    tooltip=["lake", "avg_winning_weight", "tournament_count"],
-)
-chart = (
-    alt.layer(bars, line, text).resolve_scale(y="independent").properties(height=500)
-)
+chart = alt.layer(bars, line, text).resolve_scale(y="independent").properties(height=500)
 st.altair_chart(chart, use_container_width=True)
+
 #
 # Top Ten Finishers by Year by Tournament
 #
@@ -150,7 +167,7 @@ for i, year in enumerate(years):
         st.subheader("Top 10 Results")
         st.dataframe(results_df, use_container_width=True)
 #
-# Angler Search & Perfomance
+# Angler Search & Performance
 #
 st.title("Angler Performance Viewer")
 angler_query = """
