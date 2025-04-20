@@ -3,57 +3,67 @@ import sqlite3
 import altair as alt
 import pandas as pd
 import streamlit as st
+import plotly.graph_objects as go
 
-st.set_page_config(layout="wide")
 
 TEXT_COLOR = "white" if st.get_option("theme.base") in ["dark", None] else "black"
 
-
+st.set_page_config(layout="wide")
 conn = sqlite3.connect("tournaments.db")
 
 st.header("BASS CHAMPS Tournament Data")
 #
-# Average Winning Weight by Lake
+# Average Winning Weight by Year
 #
-st.title("🎣Average Winning Weight Per Year")
-avg_winning_wts = """
-    SELECT
-        strftime('%Y', t.date) AS year,
-        ROUND(AVG(r.weight), 2) AS avg_winning_weight
-    FROM results r
-    JOIN tournaments t ON r.tournament_id = t.id
-    WHERE r.place = 1 AND r.weight IS NOT NULL AND t.lake IN (
-        SELECT lake
-        FROM tournaments
-        GROUP BY lake
-        HAVING COUNT(*) != 1
-    )
-    GROUP BY year
-    ORDER BY year;
+st.title("🎣Average Winning Weight Per Year (Top 3 Places)")
+query = """
+SELECT strftime('%Y', t.date) AS year, r.place, ROUND(AVG(r.weight), 2) AS avg_weight
+FROM results r
+JOIN tournaments t ON r.tournament_id = t.id
+WHERE r.place IN (1, 2, 3) AND r.weight IS NOT NULL
+GROUP BY year, place
 """
-df = pd.read_sql_query(avg_winning_wts, conn)
-bars = (
-    alt.Chart(df)
-    .mark_bar(color="steelblue")
-    .encode(
-        x=alt.X("year:N", title="Year", sort=None),
-        y=alt.Y("avg_winning_weight:Q", title="Avg Winning Weight (lbs)"),
-        tooltip=["year:N", "avg_winning_weight:Q"],
-    )
+df = pd.read_sql_query(query, conn).pivot(index="year", columns="place", values="avg_weight").fillna(0).reset_index()
+rows = []
+for _, r in df.iterrows():
+    y, p = r["year"], {1: r.get(1, 0), 2: r.get(2, 0), 3: r.get(3, 0)}
+    base = 0
+    for place, emoji in zip([3, 2, 1], ["🥉 3rd", "🥈 2nd", "🥇 1st"]):
+        height = p[place]
+        rows.append({
+            "year": y,
+            "place": emoji,
+            "avg_weight": height,
+            "label_y": base + height / 2,
+            "label": f"{height:.2f}",
+            "avg_weight_lbs": f"{height:.2f} lbs"
+        })
+        base += height
+df_label = pd.DataFrame(rows)
+bars = alt.Chart(df_label).mark_bar().encode(
+    x="year:N",
+    y=alt.Y("avg_weight:Q", title="Avg Weight (lbs)", stack="zero"),
+    color=alt.Color(
+        "place:N",
+        sort=["🥇 1st", "🥈 2nd", "🥉 3rd"],
+        scale=alt.Scale(scheme="blues"),
+        title="Placement"
+    ),
+    tooltip=[
+        alt.Tooltip("year:N", title="Year"),
+        alt.Tooltip("place:N", title="Place"),
+        alt.Tooltip("avg_weight_lbs:N", title="Avg Weight")
+    ]
 )
-text = (
-    alt.Chart(df)
-    .mark_text(
-        align="center",
-        baseline="bottom",
-        dy=-5,
-        color=TEXT_COLOR,
-        fontSize=12,
-        fontStyle="bold",
-    )
-    .encode(x="year:N", y="avg_winning_weight:Q", text="avg_winning_weight:Q")
+labels = alt.Chart(df_label).mark_text(
+    align="center", baseline="middle", color="white", fontSize=11, fontStyle="bold", tooltip=None
+).encode(
+    x="year:N",
+    y="label_y:Q",
+    text="label:N"
 )
-st.altair_chart(bars + text, use_container_width=True)
+st.altair_chart(bars + labels, use_container_width=True)
+
 #
 # Average Winning Weight by Lake
 #
