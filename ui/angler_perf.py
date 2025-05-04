@@ -3,36 +3,59 @@ from sqlite3 import Connection
 import altair as alt
 import pandas as pd
 import streamlit as st
+import unicodedata
+import string
 
 from db import db_conn, load_data, load_query
+
+
+def normalize_name(name: str) -> str:
+    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    name = name.lower().translate(str.maketrans("", "", string.punctuation))
+    parts = name.split()
+    if len(parts) == 3 and len(parts[1]) == 1:  # Remove middle initial
+        parts.pop(1)
+    return " ".join(parts)
 
 
 @db_conn
 def show(c: Connection) -> None:
     st.title("Angler Performance Viewer")
-    angler_list = (
-        load_data(c, q_file="queries/all_anglers.sql")["angler"]
-        .dropna()
-        .sort_values()
-        .unique()
-        .tolist()
-    )
-    selected_angler = st.text_input(
+    anglers_df = load_data(c, q_file="queries/all_anglers.sql")
+    anglers_df = anglers_df.dropna().drop_duplicates().sort_values(by="angler")
+    anglers_df["norm"] = anglers_df["angler"].map(normalize_name)
+
+    selected_angler_raw = st.text_input(
         "Search for Angler Name", "", placeholder="Type angler name ..."
     )
-    if any([not selected_angler, selected_angler not in angler_list]):
+    if not selected_angler_raw:
+        st.stop()
+
+    normalized_input = normalize_name(selected_angler_raw)
+    matches = anglers_df[anglers_df["norm"] == normalized_input]["angler"].tolist()
+    if not matches:
         st.warning("No close match found ...")
         st.stop()
-    st.success(f"Showing results for: **{selected_angler}**")
+    elif len(matches) > 1:
+        chosen = st.selectbox("Multiple matches found. Please select one:", matches)
+        angler = chosen
+    else:
+        angler = matches[0]
+    st.success(f"Showing results for: **{angler}**")
 
     df = pd.read_sql(
         load_query(filename="queries/angler_performance.sql"),
         c,
-        params=(selected_angler, selected_angler),
+        params=(angler, angler),
     )
     if df.empty:
         st.info("No tournament data found for that angler.")
         st.stop()
+
+
+
+
+
 
     st.subheader("Finishes [best, then most recent]")
     st.dataframe(
