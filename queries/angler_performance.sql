@@ -4,7 +4,9 @@ SELECT
     t.lake,
     r.place,
     r.weight,
-    r.fish
+    r.fish,
+    r.big_bass,
+    prize
 FROM tournaments t
 JOIN results r ON r.tournament_id = t.id
 WHERE

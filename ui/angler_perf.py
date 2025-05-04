@@ -52,16 +52,22 @@ def show(c: Connection) -> None:
         st.info("No tournament data found for that angler.")
         st.stop()
 
-
-
-
-
-
     st.subheader("Finishes [best, then most recent]")
-    st.dataframe(
-        df[["place", "lake", "weight", "fish", "date"]],
+    column_config = {
+        "place": st.column_config.NumberColumn("Place", width="small"),
+        "lake": st.column_config.TextColumn("Lake", width="small"),
+        "weight": st.column_config.NumberColumn("Weight(lbs)", width="small"),
+        "fish": st.column_config.NumberColumn("# Fish", width="small"),
+        "big_bass": st.column_config.NumberColumn("BigBass(lbs)", width="small"),
+        "date": st.column_config.TextColumn("Date", width="small"),
+        "prize": st.column_config.TextColumn("Prize", width="large"),
+    }
+    st.data_editor(
+        df[["place", "lake", "weight", "fish", "big_bass", "date", "prize"]],
+        column_config=column_config,
         use_container_width=True,
         hide_index=True,
+        disabled=True,
     )
     df["year"] = pd.to_datetime(df["date"]).dt.year
     yearly_stats = (
@@ -93,3 +99,4 @@ def show(c: Connection) -> None:
     ).encode(x="year:O", y="avg_place:Q", text=alt.Text("avg_place:Q", format=".1f"))
     c1.altair_chart(weight_chart, use_container_width=True)
     c2.altair_chart(place_chart, use_container_width=True)
+

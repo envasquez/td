@@ -45,7 +45,6 @@ if __name__ == "__main__":
             if filename.endswith(".json"):
                 with open(os.path.join(TOURNAMENT_DIR, filename)) as f:
                     data = json.load(f)
-
                 metadata = data.get("metadata", {})
                 results = data.get("results", [])
                 dt = datetime.strptime(metadata.get("Date"), "%B %d, %Y")
@@ -60,14 +59,12 @@ if __name__ == "__main__":
                 tournament_name = metadata.get("Tournament")
                 region = metadata.get("Region")
                 trail = metadata.get("Tournament Trail")
-
                 cursor.execute(
                     "SELECT id FROM tournaments WHERE date = ? AND tournament = ?",
                     (date_str, tournament_name),
                 )
                 exists = cursor.fetchone()
                 if exists:
-                    # print(f"⏭️ Skipping existing tournament: {tournament_name} on {date_str}")
                     continue
 
                 cursor.execute(
