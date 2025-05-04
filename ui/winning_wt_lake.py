@@ -71,7 +71,7 @@ def show(c: Connection) -> None:
                         alt.Tooltip("place:N", title="Place"),
                         alt.Tooltip("weight_lbs:N", title="Weight"),
                     ],
-                )
+                ).properties(height=500)
             )
             labels = (
                 alt.Chart(df_year)
@@ -83,8 +83,8 @@ def show(c: Connection) -> None:
                     fontStyle="bold",
                     tooltip=None,
                 )
-                .encode(x="lake:N", y="label_y:Q", text="label:N")
+                .encode(x="lake:N", y="label_y:Q", text="label:N").properties(height=500)
             )
             st.altair_chart(
-                (bars + labels).properties(height=425), use_container_width=True
+                (bars + labels).properties(height=500), use_container_width=True
             )
