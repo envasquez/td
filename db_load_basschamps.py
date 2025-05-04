@@ -33,7 +33,6 @@ LAKES = {
 }
 
 
-
 if __name__ == "__main__":
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()

@@ -85,5 +85,6 @@ def show(c: Connection) -> None:
                 )
                 .encode(x="lake:N", y="label_y:Q", text="label:N")
             )
-
-            st.altair_chart((bars + labels).properties(height=425), use_container_width=True)
+            st.altair_chart(
+                (bars + labels).properties(height=425), use_container_width=True
+            )
