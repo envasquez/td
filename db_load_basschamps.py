@@ -3,7 +3,7 @@ import os
 import sqlite3
 from datetime import datetime
 
-DB_FILE = "tournaments.db"
+DB_FILE = "tournaments2.db"
 TOURNAMENT_DIR = "data"
 LAKES = {
     "amistad": "Lake Amistad",
@@ -32,6 +32,8 @@ LAKES = {
     "squaw": "Squaw Creek",
 }
 
+
+
 if __name__ == "__main__":
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -59,12 +61,12 @@ if __name__ == "__main__":
             fish INTEGER,
             big_bass REAL,
             weight REAL,
-            prize_amt REAL,
+            prize TEXT,
             FOREIGN KEY(tournament_id) REFERENCES tournaments(id)
         )
         """
-        for q in [tournaments, results]:
-            cursor.execute(q)
+        # for q in [tournaments, results]:
+        #     cursor.execute(q)
 
         for filename in os.listdir(TOURNAMENT_DIR):
             if filename.endswith(".json"):
@@ -79,43 +81,47 @@ if __name__ == "__main__":
                     if ident in metadata.get("Tournament", "").lower():
                         lake = l
                         break
-                cursor.execute(
-                    """
-                    INSERT INTO tournaments (
-                        date, lake, region, tournament, tournament_trail
-                    ) VALUES (?, ?, ?, ?, ?)
-                    """,
-                    (
-                        dt.strftime("%Y-%m-%d"),
-                        lake,
-                        metadata.get("Region"),
-                        metadata.get("Tournament"),
-                        metadata.get("Tournament Trail"),
-                    ),
-                )
-                tournament_id = cursor.lastrowid
-                for r in results:
-                    cursor.execute(
-                        """
-                        INSERT INTO results (
-                            tournament_id, place, skeeter_boat, angler1, angler1_hometown,
-                            angler2, angler2_hometown, fish, big_bass, weight, prize_amt
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                        (
-                            tournament_id,
-                            r.get("place"),
-                            r.get("skeeter_boat"),
-                            r.get("angler1"),
-                            r.get("angler1_hometown"),
-                            r.get("angler2"),
-                            r.get("angler2_hometown"),
-                            r.get("fish"),
-                            r.get("big bass"),
-                            r.get("Wt."),
-                            r.get("prize amt."),
-                        ),
-                    )
+                if not lake:
+                    print(f"date = {dt.date().isoformat()}")
+                    print(f"metadata = {metadata}")
+
+                # cursor.execute(
+                #     """
+                #     INSERT INTO tournaments (
+                #         date, lake, region, tournament, tournament_trail
+                #     ) VALUES (?, ?, ?, ?, ?)
+                #     """,
+                #     (
+                #         dt.strftime("%Y-%m-%d"),
+                #         lake,
+                #         metadata.get("Region"),
+                #         metadata.get("Tournament"),
+                #         metadata.get("Tournament Trail"),
+                #     ),
+                # )
+                # tournament_id = cursor.lastrowid
+                # for r in results:
+                #     cursor.execute(
+                #         """
+                #         INSERT INTO results (
+                #             tournament_id, place, skeeter_boat, angler1, angler1_hometown,
+                #             angler2, angler2_hometown, fish, big_bass, weight, prize
+                #         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                #     """,
+                #         (
+                #             tournament_id,
+                #             r.get("place"),
+                #             r.get("skeeter_boat"),
+                #             r.get("angler1"),
+                #             r.get("angler1_hometown"),
+                #             r.get("angler2"),
+                #             r.get("angler2_hometown"),
+                #             r.get("fish"),
+                #             r.get("big bass"),
+                #             r.get("Wt."),
+                #             r.get("prize"),
+                #         ),
+                #     )
     finally:
         if conn:
             conn.commit()
