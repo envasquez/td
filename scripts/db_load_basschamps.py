@@ -4,7 +4,6 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-
 DB_FILE = Path(__file__).resolve().parent.parent / "tournaments.db"
 TOURNAMENT_DIR = Path(__file__).resolve().parent.parent / "data"
 LAKES = {
@@ -75,7 +74,9 @@ if __name__ == "__main__":
                     (date_str, lake, region, tournament_name, trail),
                 )
                 tournament_id = cursor.lastrowid
-                print(f"✅ Inserted: id - {tournament_id} - {tournament_name} on {date_str}")
+                print(
+                    f"✅ Inserted: id - {tournament_id} - {tournament_name} on {date_str}"
+                )
                 for r in results:
                     cursor.execute(
                         """

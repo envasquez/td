@@ -1,7 +1,6 @@
 import sqlite3
 from pathlib import Path
 
-
 NULL_LAKE_DATES = {
     "Lake LBJ": ["2012-09-29"],
     "Lake Fork": ["2023-06-25", "2010-08-28"],

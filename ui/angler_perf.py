@@ -1,10 +1,10 @@
+import string
+import unicodedata
 from sqlite3 import Connection
 
 import altair as alt
 import pandas as pd
 import streamlit as st
-import unicodedata
-import string
 
 from db import db_conn, load_data, load_query
 
@@ -99,4 +99,3 @@ def show(c: Connection) -> None:
     ).encode(x="year:O", y="avg_place:Q", text=alt.Text("avg_place:Q", format=".1f"))
     c1.altair_chart(weight_chart, use_container_width=True)
     c2.altair_chart(place_chart, use_container_width=True)
-

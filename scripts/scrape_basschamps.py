@@ -4,6 +4,7 @@ import os
 import re
 import sys
 from pathlib import Path
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 MIN_YEAR = 2006
 MAX_YEAR = 2026
-LINKS_FILE =  Path(__file__).resolve().parent.parent /  "links" / "basschamps_links.json"
+LINKS_FILE = Path(__file__).resolve().parent.parent / "links" / "basschamps_links.json"
 
 TOURNAMENT_TYPE = "type=team"
 ALL_LINKS = []
